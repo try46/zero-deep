@@ -85,29 +85,29 @@ print(hungry or sleepy)
 # if文
 
 if hungry:
-    print("I'm a hungry")
+	print("I'm a hungry")
 
 hungry = False
 
 if hungry:
-    print("I'm hungry")
+	print("I'm hungry")
 else:
-    print("I'm not hungry")
-    print("I'm a sleepy")
+	print("I'm not hungry")
+	print("I'm a sleepy")
 
 
 # for文
 
 for i in [1,2,3]:
-    print(i)
+	print(i)
 
 def hello():
-    print("Hello World")
+	print("Hello World")
 
 hello()
 
 def hello1(object):
-    print("Hello " + object+"!")
+	print("Hello " + object+"!")
 
 hello1("cat")
 
