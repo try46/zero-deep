@@ -1,7 +1,7 @@
 # coding; utf-8
 
 import numpy as np
-from common.functions import *
+from common.functions import *  # noqa
 from common.util import im2col, col2im
 
 
@@ -28,12 +28,12 @@ class Sigmoid:
         self.out = None
 
     def forward(self, x):
-        out = sigmoid(x)
+        out = sigmoid(x)  # noqa
         self.out = out
         return out
 
     def backward(self, dout):
-        dx = dout * (1.0 - self.out) * self.out
+        dx = dout * (1.0 - self.out) * self.out  # noqa
 
 
 class Affine:
@@ -71,8 +71,8 @@ class SoftmaxWithLoss:
 
     def forward(self, x, t):
         self.t = t
-        self.y = softmax(x)
-        self.loss = cross_entropy_error(self.y, self.t)
+        self.y = softmax(x)  # noqa
+        self.loss = cross_entropy_error(self.y, self.t)  # noqa
 
     def backward(self, doout=1):
         batch_size = self.t.shape[0]
