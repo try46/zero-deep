@@ -1,12 +1,12 @@
-print(1+2)
+print(1 + 2)
 
-print(1 -2)
+print(1 - 2)
 
-print( 4 * 5)
+print(4 * 5)
 
 print(7 / 5)
 
-print(3 ** 2)
+print(3**2)
 
 ## type
 
@@ -24,16 +24,15 @@ x = 100
 
 print(x)
 
-y  = 3.14
+y = 3.14
 
 print(x * y)
 
 print(type(x * y))
 
-
 ## リスト
 
-a = [1,2,3,4,5]
+a = [1, 2, 3, 4, 5]
 
 print(a)
 
@@ -60,7 +59,7 @@ print(a[:2])
 
 ## ディクショナリ
 
-me = {"height":100}
+me = {"height": 100}
 
 print(me["height"])
 
@@ -85,31 +84,31 @@ print(hungry or sleepy)
 # if文
 
 if hungry:
-	print("I'm a hungry")
+    print("I'm a hungry")
 
 hungry = False
 
 if hungry:
-	print("I'm hungry")
+    print("I'm hungry")
 else:
-	print("I'm not hungry")
-	print("I'm a sleepy")
-
+    print("I'm not hungry")
+    print("I'm a sleepy")
 
 # for文
 
-for i in [1,2,3]:
-	print(i)
+for i in [1, 2, 3]:
+    print(i)
+
 
 def hello():
-	print("Hello World")
+    print("Hello World")
+
 
 hello()
 
+
 def hello1(object):
-	print("Hello " + object+"!")
+    print("Hello " + object + "!")
+
 
 hello1("cat")
-
-
-

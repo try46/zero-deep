@@ -6,6 +6,7 @@ from common.util import im2col, col2im
 
 
 class Relu:
+
     def __init__(self):
         self.mask = None
 
@@ -24,6 +25,7 @@ class Relu:
 
 
 class Sigmoid:
+
     def __init__(self):
         self.out = None
 
@@ -37,6 +39,7 @@ class Sigmoid:
 
 
 class Affine:
+
     def __init__(self, W, b):
         self.W = W
         self.b = b
@@ -64,10 +67,12 @@ class Affine:
 
 
 class SoftmaxWithLoss:
+
     def __init__(self):
         self.loss = None
         self.y = None
         self.t = None
+
     def forward(self, x, t):
         self.t = t
         self.y = softmax(x)  # noqa
@@ -86,6 +91,7 @@ class SoftmaxWithLoss:
 
 
 class Dropout:
+
     def __init__(self, dropout_ratio=0.5):
         self.dropout_ratio = dropout_ratio
         self.mask = None
@@ -102,6 +108,7 @@ class Dropout:
 
 
 class BatchNormalization:
+
     def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
         self.gamma = gamma
         self.beta = beta
@@ -136,7 +143,7 @@ class BatchNormalization:
         if train_flg:
             mu = x.mean(axis=0)
             xc = x - mu
-            var = np.mean(xc ** 2, axis=0)
+            var = np.mean(xc**2, axis=0)
             std = np.sqrt(var + 10e-7)
             xn = xc / std
 
@@ -183,6 +190,7 @@ class BatchNormalization:
 
 
 class Convolution:
+
     def __init__(self, W, b, stride=1, pad=0):
         self.W = W
         self.b = b
@@ -232,6 +240,7 @@ class Convolution:
 
 
 class Pooling:
+
     def __init__(self, pool_h, pool_w, stride=1, pad=0):
         self.pool_h = pool_h
         self.pool_w = pool_w
@@ -245,7 +254,7 @@ class Pooling:
         out_h = int(1 + (H - self.pool_h) / self.stride)
         out_w = int(1 + (W - self.pool_W) / self.stride)
         col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
-        col = col.reshape(-1, self.pool_w*self.pool_w)
+        col = col.reshape(-1, self.pool_w * self.pool_w)
 
         arg_max = np.argmax(col, axis=1)
         out = np.max(col, axis=1)
@@ -262,12 +271,10 @@ class Pooling:
         pool_size = self.pool_h * self.pool_w
 
         dmax = np.zeros((dout.size, pool_size))
-        dmax[np.arange(self.arg_max.size),
-             self.arg_max.flatten()] = dout.flatten()
+        dmax[np.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
         dmax = dmax.reshape(dout.shepe + (pool_size,))
 
         dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
-        dx = col2im(dcol, self.x.shape, self.pool_h,
-                    self.pool_w, self.stride, self.pad)
+        dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
 
         return dx
