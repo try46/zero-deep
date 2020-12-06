@@ -1,12 +1,10 @@
-# coding; utf-8
-
+# coding: utf-8
 import numpy as np
-from common.functions import *  # noqa
+from common.functions import *
 from common.util import im2col, col2im
 
 
 class Relu:
-
     def __init__(self):
         self.mask = None
 
@@ -25,73 +23,79 @@ class Relu:
 
 
 class Sigmoid:
-
     def __init__(self):
         self.out = None
 
     def forward(self, x):
-        out = sigmoid(x)  # noqa
+        out = sigmoid(x)
         self.out = out
         return out
 
     def backward(self, dout):
-        dx = dout * (1.0 - self.out) * self.out  # noqa
+        dx = dout * (1.0 - self.out) * self.out
+
+        return dx
 
 
 class Affine:
-
     def __init__(self, W, b):
-        self.W = W
+        self.W =W
         self.b = b
-
+        
         self.x = None
         self.original_x_shape = None
-        self.dw = None
+        # 重み・バイアスパラメータの微分
+        self.dW = None
         self.db = None
 
-    def forwad(self, x):
+    def forward(self, x):
+        # テンソル対応
         self.original_x_shape = x.shape
         x = x.reshape(x.shape[0], -1)
         self.x = x
+
         out = np.dot(self.x, self.W) + self.b
 
         return out
 
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
-        self.dw = np.dot(self.x.T, dout)
+        self.dW = np.dot(self.x.T, dout)
         self.db = np.sum(dout, axis=0)
-
-        dx = dx.reshape(*self.original_x_shape)
+        
+        dx = dx.reshape(*self.original_x_shape)  # 入力データの形状に戻す（テンソル対応）
         return dx
 
 
 class SoftmaxWithLoss:
-
     def __init__(self):
         self.loss = None
-        self.y = None
-        self.t = None
+        self.y = None # softmaxの出力
+        self.t = None # 教師データ
 
     def forward(self, x, t):
         self.t = t
-        self.y = softmax(x)  # noqa
-        self.loss = cross_entropy_error(self.y, self.t)  # noqa
+        self.y = softmax(x)
+        self.loss = cross_entropy_error(self.y, self.t)
+        
+        return self.loss
 
-    def backward(self, doout=1):
+    def backward(self, dout=1):
         batch_size = self.t.shape[0]
-        if self.t.size == self.y.size:
+        if self.t.size == self.y.size: # 教師データがone-hot-vectorの場合
             dx = (self.y - self.t) / batch_size
         else:
             dx = self.y.copy()
             dx[np.arange(batch_size), self.t] -= 1
             dx = dx / batch_size
-
+        
         return dx
 
 
 class Dropout:
-
+    """
+    http://arxiv.org/abs/1207.0580
+    """
     def __init__(self, dropout_ratio=0.5):
         self.dropout_ratio = dropout_ratio
         self.mask = None
@@ -108,22 +112,24 @@ class Dropout:
 
 
 class BatchNormalization:
-
+    """
+    http://arxiv.org/abs/1502.03167
+    """
     def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
         self.gamma = gamma
         self.beta = beta
         self.momentum = momentum
-        self.input_shape = None
+        self.input_shape = None # Conv層の場合は4次元、全結合層の場合は2次元  
 
-        # Use test average  variance
+        # テスト時に使用する平均と分散
         self.running_mean = running_mean
-        self.running_var = running_var
-
-        # use backward middle date
+        self.running_var = running_var  
+        
+        # backward時に使用する中間データ
         self.batch_size = None
         self.xc = None
         self.std = None
-        self.dgame = None
+        self.dgamma = None
         self.dbeta = None
 
     def forward(self, x, train_flg=True):
@@ -131,35 +137,35 @@ class BatchNormalization:
         if x.ndim != 2:
             N, C, H, W = x.shape
             x = x.reshape(N, -1)
-        out = self.__foward(x, train_flg)
-        return out.reshape(*self.input_shape)
 
+        out = self.__forward(x, train_flg)
+        
+        return out.reshape(*self.input_shape)
+            
     def __forward(self, x, train_flg):
         if self.running_mean is None:
             N, D = x.shape
             self.running_mean = np.zeros(D)
             self.running_var = np.zeros(D)
-
+                        
         if train_flg:
             mu = x.mean(axis=0)
             xc = x - mu
             var = np.mean(xc**2, axis=0)
             std = np.sqrt(var + 10e-7)
             xn = xc / std
-
+            
             self.batch_size = x.shape[0]
             self.xc = xc
             self.xn = xn
             self.std = std
-            self.running_mean = self.momentum * \
-                self.running_mean + (1 - self.momentum) * mu
-            self.running_var = self.momentum * \
-                self.running_var + (1 - self.momentum) * var
+            self.running_mean = self.momentum * self.running_mean + (1-self.momentum) * mu
+            self.running_var = self.momentum * self.running_var + (1-self.momentum) * var            
         else:
             xc = x - self.running_mean
             xn = xc / ((np.sqrt(self.running_var + 10e-7)))
-
-        out = self.gamma * xn + self.beta
+            
+        out = self.gamma * xn + self.beta 
         return out
 
     def backward(self, dout):
@@ -182,37 +188,34 @@ class BatchNormalization:
         dxc += (2.0 / self.batch_size) * self.xc * dvar
         dmu = np.sum(dxc, axis=0)
         dx = dxc - dmu / self.batch_size
-
-        self.dgame = dgamma
+        
+        self.dgamma = dgamma
         self.dbeta = dbeta
-
+        
         return dx
 
 
 class Convolution:
-
     def __init__(self, W, b, stride=1, pad=0):
         self.W = W
         self.b = b
         self.stride = stride
         self.pad = pad
-
-        # middle date (use backward)
-        self.x = None
+        
+        # 中間データ（backward時に使用）
+        self.x = None   
         self.col = None
         self.col_W = None
-
-        # weight & bias_parameter a slant
-
+        
+        # 重み・バイアスパラメータの勾配
         self.dW = None
         self.db = None
 
     def forward(self, x):
         FN, C, FH, FW = self.W.shape
-
         N, C, H, W = x.shape
-        out_h = 1 + int((H + 2 * self.pad - FH) / self.stride)
-        out_w = 1 + int((W + 2 * self.pad - FW) / self.stride)
+        out_h = 1 + int((H + 2*self.pad - FH) / self.stride)
+        out_w = 1 + int((W + 2*self.pad - FW) / self.stride)
 
         col = im2col(x, FH, FW, self.stride, self.pad)
         col_W = self.W.reshape(FN, -1).T
@@ -228,11 +231,12 @@ class Convolution:
 
     def backward(self, dout):
         FN, C, FH, FW = self.W.shape
-        dout = dout.transpose(0, 2, 3, 1).reshape(-1, FN)
+        dout = dout.transpose(0,2,3,1).reshape(-1, FN)
 
         self.db = np.sum(dout, axis=0)
         self.dW = np.dot(self.col.T, dout)
         self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)
+
         dcol = np.dot(dout, self.col_W.T)
         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
 
@@ -240,21 +244,22 @@ class Convolution:
 
 
 class Pooling:
-
     def __init__(self, pool_h, pool_w, stride=1, pad=0):
         self.pool_h = pool_h
         self.pool_w = pool_w
         self.stride = stride
         self.pad = pad
+        
         self.x = None
         self.arg_max = None
 
     def forward(self, x):
         N, C, H, W = x.shape
         out_h = int(1 + (H - self.pool_h) / self.stride)
-        out_w = int(1 + (W - self.pool_W) / self.stride)
+        out_w = int(1 + (W - self.pool_w) / self.stride)
+
         col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
-        col = col.reshape(-1, self.pool_w * self.pool_w)
+        col = col.reshape(-1, self.pool_h*self.pool_w)
 
         arg_max = np.argmax(col, axis=1)
         out = np.max(col, axis=1)
@@ -267,14 +272,13 @@ class Pooling:
 
     def backward(self, dout):
         dout = dout.transpose(0, 2, 3, 1)
-
+        
         pool_size = self.pool_h * self.pool_w
-
         dmax = np.zeros((dout.size, pool_size))
         dmax[np.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
-        dmax = dmax.reshape(dout.shepe + (pool_size,))
-
+        dmax = dmax.reshape(dout.shape + (pool_size,)) 
+        
         dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
-
+        
         return dx
